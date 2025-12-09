@@ -54,6 +54,9 @@ INSTALLED_APPS = [
     # django apps
     "apps.accounts",
     "apps.core",
+    "apps.clinical",
+    "apps.catalog",
+    "apps.scheduling",
     
 ]
 
