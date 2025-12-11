@@ -1,6 +1,9 @@
 from rest_framework import permissions
 
 
+
+# Use DRY
+
 class IsPatientAdminOrClinicianReadOnly(permissions.BasePermission):
     """
     - patient_admin group:
@@ -34,3 +37,29 @@ class IsPatientAdminOrClinicianReadOnly(permissions.BasePermission):
 
         # non-safe methods (POST, PUT, PATCH, DELETE) only for admins
         return is_admin
+
+
+class IsPatientAdminOrClinicianForDepartment(permissions.BasePermission):
+    """
+    - patient_admin: can view stats for any department
+    - clinician: can only view stats for their own department (self-only scoping happens in view)
+    """
+
+    def has_permission(self, request, view) -> bool:
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+
+        department_id = view.kwargs.get("department_id")
+
+        # patient admin: full access
+        if user.groups.filter(name="patient_admin").exists():
+            return True
+
+        # clinician: only if their department matches path department
+        if hasattr(user, "clinician_profile"):
+            clinician = user.clinician_profile
+            if clinician.department_id == department_id:
+                return True
+
+        return False

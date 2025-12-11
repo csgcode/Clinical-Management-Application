@@ -2,7 +2,7 @@ import datetime
 
 from rest_framework import serializers
 
-from apps.clinical.models import Patient
+from apps.clinical.models import Patient, Clinician, Department
 
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -24,3 +24,19 @@ class PatientSerializer(serializers.ModelSerializer):
         if value > today:
             raise serializers.ValidationError("Date of birth cannot be in the future.")
         return value
+    
+class ClinicianSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Clinician
+        fields = ("id", "name")
+
+
+class DepartmentSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Department
+        fields = ("id", "name")
+
+
+class ClinicianPatientCountSerializer(serializers.Serializer):
+    clinician = ClinicianSummarySerializer()
+    patient_count = serializers.IntegerField()
