@@ -1,7 +1,6 @@
 from rest_framework import permissions
 
-
-# Use DRY
+from apps.core.permissions_helpers import is_patient_admin, is_clinician
 
 
 class IsPatientAdminOrClinicianReadOnly(permissions.BasePermission):
@@ -15,27 +14,29 @@ class IsPatientAdminOrClinicianReadOnly(permissions.BasePermission):
         * no access
     """
 
-    def _is_patient_admin(self, user) -> bool:
-        return (
-            user.is_authenticated and user.groups.filter(name="patient_admin").exists()
-        )
-
-    def _is_clinician(self, user) -> bool:
-        return user.is_authenticated and hasattr(user, "clinician_profile")
-
     def has_permission(self, request, view) -> bool:
+        """
+        Check if user has permission to access patient endpoints.
+
+        Args:
+            request: HTTP request object
+            view: The view being accessed
+
+        Returns:
+            True if user has appropriate permissions, False otherwise
+        """
         user = request.user
         if not user or not user.is_authenticated:
             return False
 
-        is_admin = self._is_patient_admin(user)
-        is_clinician = self._is_clinician(user)
+        admin = is_patient_admin(user)
+        clinician = is_clinician(user)
 
         if request.method in permissions.SAFE_METHODS:
-            return is_admin or is_clinician
+            return admin or clinician
 
         # non-safe methods (POST, PUT, PATCH, DELETE) only for admins
-        return is_admin
+        return admin
 
 
 class IsPatientAdminOrClinicianForDepartment(permissions.BasePermission):
@@ -45,6 +46,16 @@ class IsPatientAdminOrClinicianForDepartment(permissions.BasePermission):
     """
 
     def has_permission(self, request, view) -> bool:
+        """
+        Check if user can access department clinician patient counts.
+
+        Args:
+            request: HTTP request object
+            view: The view being accessed
+
+        Returns:
+            True if user has appropriate permissions, False otherwise
+        """
         user = request.user
         if not user or not user.is_authenticated:
             return False
@@ -52,11 +63,11 @@ class IsPatientAdminOrClinicianForDepartment(permissions.BasePermission):
         department_id = view.kwargs.get("department_id")
 
         # patient admin: full access
-        if user.groups.filter(name="patient_admin").exists():
+        if is_patient_admin(user):
             return True
 
         # clinician: only if their department matches path department
-        if hasattr(user, "clinician_profile"):
+        if is_clinician(user):
             clinician = user.clinician_profile
             if clinician.department_id == department_id:
                 return True

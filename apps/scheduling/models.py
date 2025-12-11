@@ -18,6 +18,8 @@ class Procedure(TimeStampedModel, SoftDeleteModel):
         NO_SHOW = "NO_SHOW", "No Show"
         VOID = "VOID", "Void"
 
+    ACTIVE_PROCEDURE_STATUSES = [ProcedureStatus.PLANNED, ProcedureStatus.SCHEDULED]
+    
     procedure_type = models.ForeignKey(
         ProcedureType,
         on_delete=models.PROTECT,

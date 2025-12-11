@@ -1,9 +1,7 @@
-from django.db.models import Q
-from django.db.models import Count
+from django.db.models import Q, Count
 
 from rest_framework import viewsets
 from rest_framework.generics import GenericAPIView
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 
 from apps.clinical.models import Patient, Clinician, Department, PatientClinician
@@ -16,11 +14,8 @@ from apps.clinical.permissions import (
     IsPatientAdminOrClinicianReadOnly,
     IsPatientAdminOrClinicianForDepartment,
 )
-
-
-class PatientPagination(LimitOffsetPagination):
-    default_limit = 20
-    max_limit = 100
+from apps.core.pagination import StandardPagination
+from apps.core.permissions_helpers import is_patient_admin, is_clinician
 
 
 class PatientViewSet(viewsets.ModelViewSet):
@@ -33,7 +28,7 @@ class PatientViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = PatientSerializer
-    pagination_class = PatientPagination
+    pagination_class = StandardPagination
     permission_classes = [IsAuthenticated, IsPatientAdminOrClinicianReadOnly]
 
     def get_queryset(self):
@@ -48,12 +43,10 @@ class PatientViewSet(viewsets.ModelViewSet):
         """
         user = self.request.user
         qs = Patient.objects.all()
-
-        # Change this to permissions?
-        if user.groups.filter(name="patient_admin").exists():
+        if is_patient_admin(user):
             base_qs = qs
 
-        elif hasattr(user, "clinician_profile"):
+        elif is_clinician(user):
             clinician = user.clinician_profile
             base_qs = qs.filter(
                 patient_clinician_links__clinician=clinician,
@@ -71,11 +64,6 @@ class PatientViewSet(viewsets.ModelViewSet):
         return base_qs
 
 
-class DepartmentClinicianPatientCountPagination(LimitOffsetPagination):
-    default_limit = 20
-    max_limit = 100
-
-
 class DepartmentClinicianPatientCountView(GenericAPIView):
     """
     GET /api/v1/departments/{department_id}/clinician-patient-counts/
@@ -87,10 +75,22 @@ class DepartmentClinicianPatientCountView(GenericAPIView):
     """
 
     permission_classes = [IsAuthenticated, IsPatientAdminOrClinicianForDepartment]
-    pagination_class = DepartmentClinicianPatientCountPagination
-    serializer_class = ClinicianPatientCountSerializer  # for type hints only
+    pagination_class = StandardPagination
+    serializer_class = ClinicianPatientCountSerializer
 
     def get(self, request, department_id: int, *args, **kwargs):
+        """
+        Retrieve clinician patient counts for a specific department.
+
+        Args:
+            request: HTTP request object
+            department_id: Department ID from URL path
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments
+
+        Returns:
+            Paginated response with clinician patient count data
+        """
         # 1. Resolve department or 404
         try:
             department = Department.objects.get(pk=department_id)
@@ -100,25 +100,20 @@ class DepartmentClinicianPatientCountView(GenericAPIView):
             raise NotFound("Department not found.")
 
         user = request.user
-        is_admin = user.groups.filter(name="patient_admin").exists()
-        is_clinician = hasattr(user, "clinician_profile")
+        admin = is_patient_admin(user)
+        clinician = is_clinician(user)
 
-        # 2. Base clinicians queryset for this department (SoftDeleteManager excludes deleted)
         clinicians_qs = Clinician.objects.filter(department=department)
 
-        # 3. Clinician role → restrict to self only
-        if is_clinician and not is_admin:
+        if clinician and not admin:
             clinician_profile = user.clinician_profile
             clinicians_qs = clinicians_qs.filter(pk=clinician_profile.pk)
 
-        # 4. Optional filter: clinician_id (for admins only)
         clinician_id_param = request.query_params.get("clinician_id")
         if clinician_id_param is not None:
-            if not is_admin:
-                # clinicians cannot use this to see others; ignore it (self-only is already enforced)
+            if not admin:
                 pass
             else:
-                # validate integer
                 try:
                     clinician_id = int(clinician_id_param)
                 except ValueError:
@@ -131,14 +126,9 @@ class DepartmentClinicianPatientCountView(GenericAPIView):
                     )
                 clinicians_qs = clinicians_qs.filter(pk=clinician_id)
 
-        # 5. Pagination over clinicians in this department
         clinicians_qs = clinicians_qs.order_by("name", "id")
         page = self.paginate_queryset(clinicians_qs)
-
-        # If there are no clinicians at all (count=0), page will be []
         clinicians_on_page = list(page)
-
-        # 6. Aggregate patient counts for clinicians on this page
         if clinicians_on_page:
             counts_qs = (
                 PatientClinician.objects.filter(
@@ -156,7 +146,6 @@ class DepartmentClinicianPatientCountView(GenericAPIView):
         else:
             counts_map = {}
 
-        # 7. Build results payload
         results = []
         for clinician in clinicians_on_page:
             results.append(
@@ -169,12 +158,7 @@ class DepartmentClinicianPatientCountView(GenericAPIView):
                 }
             )
 
-        # 8. Use paginator to build paginated response, then inject department meta
         paginated = self.get_paginated_response(results)
-        # paginated.data is an OrderedDict with count/next/previous/results
         paginated.data["department"] = DepartmentSummarySerializer(department).data
-
-        # Ensure department appears first or last as you prefer; currently appended
-        # If you want it first, you can reorder keys, but not necessary for functionality.
 
         return paginated

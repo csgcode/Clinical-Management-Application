@@ -15,7 +15,6 @@ import sys
 
 from pathlib import Path
 
-# from dotenv import load_dotenv
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -49,8 +48,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    
     "rest_framework",
-    # "django_filters",
+    "django_filters",
+    
     # django apps
     "apps.accounts",
     "apps.core",
@@ -127,7 +128,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
-    "PAGE_SIZE": 100,
+    "PAGE_SIZE": 20,
 }
 
 # Password validation

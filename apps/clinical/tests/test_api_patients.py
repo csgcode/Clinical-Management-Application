@@ -15,7 +15,6 @@ from apps.clinical.tests.conftest import *
 def test_unauthenticated_user_get_list(api_client):
     url = reverse("clinical:patient-list")
     response = api_client.get(url)
-    print("asdasd:dasdasd", response.data)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 

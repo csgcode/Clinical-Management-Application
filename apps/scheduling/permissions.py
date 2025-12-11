@@ -1,5 +1,7 @@
 from rest_framework.permissions import BasePermission
 
+from apps.core.permissions_helpers import is_patient_admin, is_clinician
+
 
 class IsPatientAdminOrClinician(BasePermission):
     """
@@ -12,14 +14,18 @@ class IsPatientAdminOrClinician(BasePermission):
     """
 
     def has_permission(self, request, view) -> bool:
+        """
+        Check if user is admin or clinician.
+
+        Args:
+            request: HTTP request object
+            view: The view being accessed
+
+        Returns:
+            True if user is admin or clinician, False otherwise
+        """
         user = request.user
         if not user or not user.is_authenticated:
             return False
 
-        if user.groups.filter(name="patient_admin").exists():
-            return True
-
-        if hasattr(user, "clinician_profile"):
-            return True
-
-        return False
+        return is_patient_admin(user) or is_clinician(user)
