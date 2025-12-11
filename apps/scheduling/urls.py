@@ -1,9 +1,16 @@
-# apps/scheduling/api/urls.py
 from rest_framework.routers import DefaultRouter
+from django.urls import path
 
-from apps.scheduling.views import ProcedureViewSet
+from apps.scheduling.views import ProcedureViewSet, ProcedureScheduledPatientsView
 
 router = DefaultRouter()
 router.register(r"procedures", ProcedureViewSet, basename="procedure")
 
-urlpatterns = router.urls
+urlpatterns = [
+    path(
+        "procedures/scheduled-patients/",
+        ProcedureScheduledPatientsView.as_view(),
+        name="procedure-scheduled-patients",
+    ),
+    *router.urls,
+]

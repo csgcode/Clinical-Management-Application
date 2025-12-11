@@ -1,4 +1,5 @@
 from django.utils import timezone
+from datetime import date
 from rest_framework import serializers
 
 from apps.clinical.models import Patient, Clinician, PatientClinician
@@ -133,3 +134,74 @@ class ProcedureSerializer(serializers.ModelSerializer):
             validated_data["duration_minutes"] = procedure_type.default_duration_minutes
 
         return super().create(validated_data)
+
+
+
+class ProcedureScheduledPatientsQuerySerializer(serializers.Serializer):
+    """
+    Validates query params for:
+    GET /api/v1/procedures/scheduled-patients/
+    """
+
+    procedure_type_id = serializers.IntegerField(required=True)
+    date_from = serializers.DateField(required=False)
+    date_to = serializers.DateField(required=False)
+    department_id = serializers.IntegerField(required=False)
+    clinician_id = serializers.IntegerField(required=False)
+
+    def validate(self, attrs):
+        date_from: date | None = attrs.get("date_from")
+        date_to: date | None = attrs.get("date_to")
+
+        if date_from and date_to and date_from > date_to:
+            raise serializers.ValidationError(
+                "date_from must be less than or equal to date_to."
+            )
+        return attrs
+
+
+class ProcedureMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Procedure
+        fields = ("id", "status", "scheduled_at", "duration_minutes")
+
+
+class ProcedureScheduledPatientSerializer(serializers.Serializer):
+    """
+    Serializer for the scheduled-patients endpoint response.
+    Returns a grouped structure with procedure, patient, and clinician info.
+    """
+    
+    class ProcedureMinimalSerializer(serializers.Serializer):
+        id = serializers.IntegerField()
+        status = serializers.CharField()
+        scheduled_at = serializers.DateTimeField()
+        duration_minutes = serializers.IntegerField()
+    
+    procedure = ProcedureMinimalSerializer()
+    patient = PatientSummarySerializer()
+    clinician = ClinicianSummarySerializer()
+    
+    def to_representation(self, instance):
+        """
+        Transform a Procedure instance into the grouped response format.
+        """
+        return {
+            "procedure": {
+                "id": instance.id,
+                "status": instance.status,
+                "scheduled_at": instance.scheduled_at,
+                "duration_minutes": instance.duration_minutes,
+            },
+            "patient": {
+                "id": instance.patient.id,
+                "name": instance.patient.name,
+                "gender": instance.patient.gender,
+            },
+            "clinician": {
+                "id": instance.clinician.id,
+                "name": instance.clinician.name,
+            },
+        }
+        
+
