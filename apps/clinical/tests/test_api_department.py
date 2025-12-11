@@ -161,6 +161,7 @@ def department_counts_url():
             "clinical:department-clinician-patient-counts",
             kwargs={"department_id": department_id},
         )
+
     return _build
 
 
@@ -256,7 +257,9 @@ def test_patient_admin_sees_all_clinicians_with_counts(
     assert data["department"]["id"] == department_a.id
     assert data["department"]["name"] == department_a.name
 
-    returned = {item["clinician"]["id"]: item["patient_count"] for item in data["results"]}
+    returned = {
+        item["clinician"]["id"]: item["patient_count"] for item in data["results"]
+    }
 
     # 3 clinicians in department_a
     assert data["count"] == 3
@@ -311,7 +314,9 @@ def test_patient_admin_pagination(
     response2 = api_client.get(url, {"limit": 2, "offset": 2})
     assert response2.status_code == status.HTTP_200_OK
     assert response2.data["count"] == 5
-    assert len(response2.data["results"]) == 2 or len(response2.data["results"]) == 1  # last page
+    assert (
+        len(response2.data["results"]) == 2 or len(response2.data["results"]) == 1
+    )  # last page
 
 
 @pytest.mark.django_db
@@ -440,7 +445,10 @@ def test_soft_deleted_clinician_excluded(
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
-    returned = {item["clinician"]["id"]: item["patient_count"] for item in response.data["results"]}
+    returned = {
+        item["clinician"]["id"]: item["patient_count"]
+        for item in response.data["results"]
+    }
 
     assert active_clinician.id in returned
     assert returned[active_clinician.id] == 1
@@ -485,7 +493,10 @@ def test_soft_deleted_patient_and_ended_relationship_are_not_counted(
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
-    returned = {item["clinician"]["id"]: item["patient_count"] for item in response.data["results"]}
+    returned = {
+        item["clinician"]["id"]: item["patient_count"]
+        for item in response.data["results"]
+    }
 
     assert returned[clinician_a1.id] == 1  # only patient_1 counted
 
@@ -520,7 +531,10 @@ def test_duplicate_links_for_same_patient_are_counted_distinct_once(
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
-    returned = {item["clinician"]["id"]: item["patient_count"] for item in response.data["results"]}
+    returned = {
+        item["clinician"]["id"]: item["patient_count"]
+        for item in response.data["results"]
+    }
 
     assert returned[clinician_a1.id] == 1
 

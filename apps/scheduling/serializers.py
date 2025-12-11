@@ -85,7 +85,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
         errors = {}
 
         if status_value in ("PLANNED", "SCHEDULED"):
-            # TODO set defaults 
+            # TODO set defaults
             if scheduled_at is None:
                 errors["scheduled_at"] = [
                     "This field is required for PLANNED or SCHEDULED procedures."
@@ -102,8 +102,8 @@ class ProcedureSerializer(serializers.ModelSerializer):
             and user.is_authenticated
             and user.groups.filter(name="patient_admin").exists()
         )
-        is_clinician = user and user.is_authenticated and hasattr(
-            user, "clinician_profile"
+        is_clinician = (
+            user and user.is_authenticated and hasattr(user, "clinician_profile")
         )
 
         if is_clinician and not is_admin:
@@ -130,11 +130,14 @@ class ProcedureSerializer(serializers.ModelSerializer):
         duration = validated_data.get("duration_minutes")
 
         # Fill duration_minutes from ProcedureType.default_duration_minutes if missing.
-        if duration is None and procedure_type and procedure_type.default_duration_minutes:
+        if (
+            duration is None
+            and procedure_type
+            and procedure_type.default_duration_minutes
+        ):
             validated_data["duration_minutes"] = procedure_type.default_duration_minutes
 
         return super().create(validated_data)
-
 
 
 class ProcedureScheduledPatientsQuerySerializer(serializers.Serializer):
@@ -171,17 +174,17 @@ class ProcedureScheduledPatientSerializer(serializers.Serializer):
     Serializer for the scheduled-patients endpoint response.
     Returns a grouped structure with procedure, patient, and clinician info.
     """
-    
+
     class ProcedureMinimalSerializer(serializers.Serializer):
         id = serializers.IntegerField()
         status = serializers.CharField()
         scheduled_at = serializers.DateTimeField()
         duration_minutes = serializers.IntegerField()
-    
+
     procedure = ProcedureMinimalSerializer()
     patient = PatientSummarySerializer()
     clinician = ClinicianSummarySerializer()
-    
+
     def to_representation(self, instance):
         """
         Transform a Procedure instance into the grouped response format.
@@ -203,5 +206,3 @@ class ProcedureScheduledPatientSerializer(serializers.Serializer):
                 "name": instance.clinician.name,
             },
         }
-        
-

@@ -8,6 +8,7 @@ class ProcedureType(TimeStampedModel):
     """
     Master catalogue of available procedures.
     """
+
     name = models.CharField(max_length=255)
     code = models.CharField(
         max_length=50,

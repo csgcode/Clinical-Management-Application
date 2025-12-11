@@ -8,6 +8,7 @@ class TimeStampedModel(models.Model):
     """
     Abstract base model that provides created_at / updated_at timestamps.
     """
+
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
@@ -19,6 +20,7 @@ class SoftDeleteModel(models.Model):
     """
     Abstract base model for soft deletion, using a nullable deleted_at field.
     """
+
     deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     objects = SoftDeleteManager()

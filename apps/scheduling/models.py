@@ -9,6 +9,7 @@ class Procedure(TimeStampedModel, SoftDeleteModel):
     """
     A scheduled or completed procedure for a patient.
     """
+
     class ProcedureStatus(models.TextChoices):
         PLANNED = "PLANNED", "Planned"
         SCHEDULED = "SCHEDULED", "Scheduled"
@@ -16,7 +17,7 @@ class Procedure(TimeStampedModel, SoftDeleteModel):
         CANCELLED = "CANCELLED", "Cancelled"
         NO_SHOW = "NO_SHOW", "No Show"
         VOID = "VOID", "Void"
-    
+
     procedure_type = models.ForeignKey(
         ProcedureType,
         on_delete=models.PROTECT,

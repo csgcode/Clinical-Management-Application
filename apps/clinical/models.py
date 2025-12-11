@@ -8,6 +8,7 @@ class Department(TimeStampedModel):
     """
     Hospital department, e.g. Cardiology, Radiology.
     """
+
     name = models.CharField(max_length=255, unique=True)
     description = models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
@@ -23,6 +24,7 @@ class Clinician(TimeStampedModel, SoftDeleteModel):
     """
     Profile for clinicians (doctors, nurses, etc.).
     """
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -34,7 +36,6 @@ class Clinician(TimeStampedModel, SoftDeleteModel):
         related_name="clinicians",
     )
     name = models.CharField(max_length=255)
-
 
     class Meta:
         ordering = ["name"]
@@ -50,6 +51,7 @@ class Patient(TimeStampedModel, SoftDeleteModel):
     """
     Domain profile for patients.
     """
+
     class Gender(models.TextChoices):
         MALE = "MALE", "Male"
         FEMALE = "FEMALE", "Female"
@@ -100,6 +102,7 @@ class PatientClinician(TimeStampedModel, SoftDeleteModel):
     Association between Patient and Clinician.
     Represents care responsibility with history/metadata.
     """
+
     patient = models.ForeignKey(
         Patient,
         on_delete=models.CASCADE,

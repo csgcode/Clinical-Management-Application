@@ -34,9 +34,7 @@ def test_unauthenticated_user_post(api_client):
 
 @pytest.mark.django_db
 def test_user_without_group_cannot_access(api_client, db):
-    user = User.objects.create_user(
-        email="regular@example.com", password="password123"
-    )
+    user = User.objects.create_user(email="regular@example.com", password="password123")
     api_client.force_authenticate(user=user)
 
     list_url = reverse("clinical:patient-list")

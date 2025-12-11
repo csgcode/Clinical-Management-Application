@@ -10,7 +10,10 @@ from rest_framework.permissions import IsAuthenticated
 from apps.catalog.models import ProcedureType
 from apps.clinical.models import PatientClinician
 from apps.scheduling.models import Procedure
-from apps.scheduling.serializers import ProcedureScheduledPatientSerializer, ProcedureSerializer
+from apps.scheduling.serializers import (
+    ProcedureScheduledPatientSerializer,
+    ProcedureSerializer,
+)
 from apps.scheduling.permissions import IsPatientAdminOrClinician
 from apps.scheduling.filters import ProcedureScheduledPatientsFilter
 
@@ -44,10 +47,9 @@ class ProcedureViewSet(viewsets.ModelViewSet):
         - others: no access (handled by permission)
         """
         user = self.request.user
-        qs = (
-            Procedure.objects.select_related("patient", "clinician", "procedure_type")
-            .all()
-        )
+        qs = Procedure.objects.select_related(
+            "patient", "clinician", "procedure_type"
+        ).all()
 
         if hasattr(user, "clinician_profile"):
             clinician = user.clinician_profile
@@ -210,7 +212,7 @@ class ProcedureScheduledPatientsView(ListAPIView):
     def _parse_and_validate_procedure_type(self, request) -> ProcedureType:
         """
         Validate and parse the required procedure_type_id query parameter.
-        
+
         Raises:
             ValidationError: if missing or non-integer.
             NotFound: if procedure type does not exist.
@@ -232,7 +234,7 @@ class ProcedureScheduledPatientsView(ListAPIView):
     def _validate_date_range(self, request) -> None:
         """
         Cross-field validation: date_from must be <= date_to when both present.
-        
+
         Individual format validation is handled by django-filter's DateFilter.
         Raises:
             ValidationError: if date_from > date_to.
@@ -251,7 +253,11 @@ class ProcedureScheduledPatientsView(ListAPIView):
 
         if from_date > to_date:
             raise ValidationError(
-                {"non_field_errors": ["date_from must be less than or equal to date_to."]}
+                {
+                    "non_field_errors": [
+                        "date_from must be less than or equal to date_to."
+                    ]
+                }
             )
 
     def get_queryset(self):
@@ -259,26 +265,23 @@ class ProcedureScheduledPatientsView(ListAPIView):
         # This is called after validation passes, so we can assume
         # procedure_type and date_range are valid
         procedure_type = self.request._validated_procedure_type
-        
+
         user = self.request.user
         is_admin = user.groups.filter(name="patient_admin").exists()
         is_clinician = hasattr(user, "clinician_profile")
 
-        qs = (
-            Procedure.objects.select_related("patient", "clinician")
-            .filter(
-                procedure_type=procedure_type,
-                status__in=["PLANNED", "SCHEDULED"],
-                patient__deleted_at__isnull=True,
-                clinician__deleted_at__isnull=True,
-            )
+        qs = Procedure.objects.select_related("patient", "clinician").filter(
+            procedure_type=procedure_type,
+            status__in=["PLANNED", "SCHEDULED"],
+            patient__deleted_at__isnull=True,
+            clinician__deleted_at__isnull=True,
         )
 
         if is_clinician and not is_admin:
             qs = qs.filter(clinician=user.clinician_profile)
 
         return qs.order_by("scheduled_at", "id")
-    
+
     def filter_queryset(self, queryset):
         """
         Override to ignore clinician_id filter for clinicians.
@@ -288,18 +291,19 @@ class ProcedureScheduledPatientsView(ListAPIView):
         user = self.request.user
         is_clinician = hasattr(user, "clinician_profile")
         is_admin = user.groups.filter(name="patient_admin").exists()
-        
+
         # For clinicians, bypass clinician_id filter by applying other filters only
         if is_clinician and not is_admin:
             # Get all filter parameters except clinician_id
             params_dict = self.request.query_params.dict()
             params_dict.pop("clinician_id", None)
-            
+
             # Create a new QueryDict from the filtered params
             from django.http import QueryDict
+
             filtered_params = QueryDict(mutable=True)
             filtered_params.update(params_dict)
-            
+
             # Apply filters manually without clinician_id
             filterset = self.filterset_class(
                 filtered_params,
@@ -307,20 +311,20 @@ class ProcedureScheduledPatientsView(ListAPIView):
                 request=self.request,
             )
             return filterset.qs
-        
+
         return super().filter_queryset(queryset)
-    
+
     def list(self, request, *args, **kwargs):
         # Perform validation that should return 400/404 errors
         try:
             procedure_type = self._parse_and_validate_procedure_type(request)
             self._validate_date_range(request)
-            
+
             # Store validated procedure_type on request for use in get_queryset
             request._validated_procedure_type = procedure_type
         except (ValidationError, NotFound) as e:
             # Re-raise to let DRF's exception handler process it
             raise
-        
+
         # Call parent list() which will use get_queryset()
         return super().list(request, *args, **kwargs)

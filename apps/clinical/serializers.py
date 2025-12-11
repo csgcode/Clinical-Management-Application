@@ -24,7 +24,8 @@ class PatientSerializer(serializers.ModelSerializer):
         if value > today:
             raise serializers.ValidationError("Date of birth cannot be in the future.")
         return value
-    
+
+
 class ClinicianSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Clinician

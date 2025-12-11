@@ -21,10 +21,13 @@ from django.urls import path, include
 v1_api_patterns = [
     # TODO fix url namespace references duplications ex/patient/patent ..
     path("", include(("apps.clinical.urls", "clinical"), namespace="clinical")),
-    path("scheduling/", include(("apps.scheduling.urls", "scheduling"), namespace="scheduling")),
+    path(
+        "scheduling/",
+        include(("apps.scheduling.urls", "scheduling"), namespace="scheduling"),
+    ),
 ]
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/v1/", include(v1_api_patterns))
+    path("api/v1/", include(v1_api_patterns)),
 ]

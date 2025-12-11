@@ -1,8 +1,8 @@
 from rest_framework import permissions
 
 
-
 # Use DRY
+
 
 class IsPatientAdminOrClinicianReadOnly(permissions.BasePermission):
     """
@@ -17,8 +17,7 @@ class IsPatientAdminOrClinicianReadOnly(permissions.BasePermission):
 
     def _is_patient_admin(self, user) -> bool:
         return (
-            user.is_authenticated
-            and user.groups.filter(name="patient_admin").exists()
+            user.is_authenticated and user.groups.filter(name="patient_admin").exists()
         )
 
     def _is_clinician(self, user) -> bool:

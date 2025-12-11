@@ -22,7 +22,6 @@ def api_client():
     return APIClient()
 
 
-
 @pytest.fixture
 def patient_admin_group(db):
     group, _ = Group.objects.get_or_create(name="patient_admin")
@@ -74,7 +73,6 @@ def other_clinician_user(db):
         email="otherdoc@example.com",
         password="password123",
     )
-
 
 
 @pytest.fixture
@@ -182,7 +180,6 @@ def inactive_procedure_type(db, department):
         department=department,
         is_active=False,
     )
-
 
 
 @pytest.fixture
@@ -343,7 +340,10 @@ def test_patient_admin_cannot_assign_to_soft_deleted_patient_or_clinician(
     response = api_client.post(procedure_list_url, payload, format="json")
     # Treat as invalid input / not found – 400 with field errors or 404 both acceptable;
     # TODO
-    assert response.status_code in (status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND)
+    assert response.status_code in (
+        status.HTTP_400_BAD_REQUEST,
+        status.HTTP_404_NOT_FOUND,
+    )
 
 
 # -------------------------------------------------------------------

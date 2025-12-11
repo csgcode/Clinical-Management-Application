@@ -7,8 +7,15 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 
 from apps.clinical.models import Patient, Clinician, Department, PatientClinician
-from apps.clinical.serializers import PatientSerializer, ClinicianPatientCountSerializer, DepartmentSummarySerializer
-from apps.clinical.permissions import IsPatientAdminOrClinicianReadOnly, IsPatientAdminOrClinicianForDepartment
+from apps.clinical.serializers import (
+    PatientSerializer,
+    ClinicianPatientCountSerializer,
+    DepartmentSummarySerializer,
+)
+from apps.clinical.permissions import (
+    IsPatientAdminOrClinicianReadOnly,
+    IsPatientAdminOrClinicianForDepartment,
+)
 
 
 class PatientPagination(LimitOffsetPagination):
@@ -45,7 +52,7 @@ class PatientViewSet(viewsets.ModelViewSet):
         # Change this to permissions?
         if user.groups.filter(name="patient_admin").exists():
             base_qs = qs
-        
+
         elif hasattr(user, "clinician_profile"):
             clinician = user.clinician_profile
             base_qs = qs.filter(
