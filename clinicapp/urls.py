@@ -19,7 +19,9 @@ from django.contrib import admin
 from django.urls import path, include
 
 v1_api_patterns = [
-    path("", include(("apps.clinical.urls", "clinical"), namespace="clinical"))
+    # TODO fix url namespace references duplications ex/patient/patent ..
+    path("", include(("apps.clinical.urls", "clinical"), namespace="clinical")),
+    path("scheduling/", include(("apps.scheduling.urls", "scheduling"), namespace="scheduling")),
 ]
 
 urlpatterns = [
