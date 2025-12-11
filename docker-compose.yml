@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: clinicapp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: clinicapp
+      POSTGRES_USER: clinicapp
+      POSTGRES_PASSWORD: clinicapp
+    ports:
+      - "5433:5432"
+    volumes:
+      - clinicapp_pg_data:/var/lib/postgresql/data
+
+volumes:
+  clinicapp_pg_data:
