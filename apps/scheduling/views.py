@@ -42,6 +42,7 @@ class ProcedureViewSet(viewsets.ModelViewSet):
             .all()
         )
 
+        # TODO remove
         if user.groups.filter(name="patient_admin").exists():
             return qs
 

@@ -106,6 +106,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
         )
 
         if is_clinician and not is_admin:
+            # TODO check the duplciaate logic
             clinician_profile = user.clinician_profile
 
             # clinicians can only assign themselves as clinician
@@ -117,6 +118,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
         if errors:
             raise serializers.ValidationError(errors)
 
+        # TODO move to create
         if not attrs.get("name") and procedure_type:
             attrs["name"] = procedure_type.name
 
