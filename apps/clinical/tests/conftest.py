@@ -110,10 +110,9 @@ def patient_3(db):
 
 @pytest.fixture
 def department_counts_url():
-    def _build(department_id: int) -> str:
+    def _build() -> str:
         return reverse(
-            "clinical:department-clinician-patient-counts",
-            kwargs={"department_id": department_id},
+            "clinical:clinician-patient-counts",
         )
 
     return _build

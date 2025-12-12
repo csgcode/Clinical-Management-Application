@@ -8,10 +8,10 @@ router = DefaultRouter()
 router.register(r"patients", PatientViewSet, basename="patient")
 
 
-urlpatterns = urlpatterns = [
+urlpatterns = [
     path("", include(router.urls)),
-    path("departments/<int:department_id>/clinician-patient-counts/",
+    path("clinician-patient-counts/",
         DepartmentClinicianPatientCountListViewSet.as_view(),
-        name="department-clinician-patient-counts",
+        name="clinician-patient-counts",
     ),
 ]

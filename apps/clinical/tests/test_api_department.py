@@ -23,7 +23,7 @@ def test_unauthenticated_user_gets_401(
     department_a,
     department_counts_url,
 ):
-    url = department_counts_url(department_a.id)
+    url = department_counts_url() + f"?department={department_a.id}"
     response = api_client.get(url)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -36,7 +36,7 @@ def test_regular_user_gets_403(
     department_counts_url,
 ):
     api_client.force_authenticate(user=regular_user)
-    url = department_counts_url(department_a.id)
+    url = department_counts_url() + f"?department={department_a.id}"
     response = api_client.get(url)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -50,7 +50,7 @@ def test_clinician_in_other_department_gets_403(
     department_counts_url,
 ):
     api_client.force_authenticate(user=clinician_user_other_dept)
-    url = department_counts_url(department_a.id)
+    url = department_counts_url() + f"?department={department_a.id}"
     response = api_client.get(url)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -93,7 +93,7 @@ def test_patient_admin_sees_all_clinicians_with_counts(
         relationship_start=now,
     )
 
-    url = department_counts_url(department_a.id)
+    url = department_counts_url() + f"?department={department_a.id}"
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
@@ -141,7 +141,7 @@ def test_patient_admin_pagination(
     )
 
     api_client.force_authenticate(user=patient_admin_user)
-    url = department_counts_url(department_a.id)
+    url = department_counts_url() + f"?department={department_a.id}"
 
     response = api_client.get(url, {"limit": 2, "offset": 0})
     assert response.status_code == status.HTTP_200_OK
@@ -181,8 +181,8 @@ def test_patient_admin_filter_by_clinician_id(
         relationship_start=now,
     )
 
-    url = department_counts_url(department_a.id)
-    response = api_client.get(url, {"clinician": clinician_a1.id})
+    url = department_counts_url() + f"?department={department_a.id}&clinician={clinician_a1.id}"
+    response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
     data = response.data
@@ -204,8 +204,8 @@ def test_patient_admin_filter_by_clinician_not_in_department_returns_empty(
 ):
     api_client.force_authenticate(user=patient_admin_user)
 
-    url = department_counts_url(department_a.id)
-    response = api_client.get(url, {"clinician": clinician_b1.id})
+    url = department_counts_url() + f"?department={department_a.id}&clinician={clinician_b1.id}"
+    response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
     assert response.data["count"] == 0
@@ -221,8 +221,8 @@ def test_patient_admin_invalid_clinician_id_type_returns_400(
 ):
     api_client.force_authenticate(user=patient_admin_user)
 
-    url = department_counts_url(department_a.id)
-    response = api_client.get(url, {"clinician": "abc"})
+    url = department_counts_url() + "?department=invalid&clinician=abc"
+    response = api_client.get(url)
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert "clinician" in response.data
@@ -272,7 +272,7 @@ def test_soft_deleted_clinician_excluded(
 
     deleted_clinician.delete()
 
-    url = department_counts_url(department_a.id)
+    url = department_counts_url() + f"?department={department_a.id}"
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
@@ -317,7 +317,7 @@ def test_soft_deleted_patient_and_ended_relationship_are_not_counted(
 
     patient_2.delete()
 
-    url = department_counts_url(department_a.id)
+    url = department_counts_url() + f"?department={department_a.id}"
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
@@ -354,7 +354,7 @@ def test_duplicate_links_for_same_patient_are_counted_distinct_once(
         relationship_start=now,
     )
 
-    url = department_counts_url(department_a.id)
+    url = department_counts_url() + f"?department={department_a.id}"
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
@@ -374,9 +374,10 @@ def test_nonexistent_department_returns_404(
 ):
     api_client.force_authenticate(user=patient_admin_user)
 
-    url = department_counts_url(999999)
+    url = department_counts_url() + "?department=999999"
     response = api_client.get(url)
-    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "department" in response.data
 
 
 @pytest.mark.django_db
@@ -388,7 +389,7 @@ def test_department_with_no_clinicians_returns_empty_list(
     api_client.force_authenticate(user=patient_admin_user)
 
     dept = Department.objects.create(name="Empty Dept")
-    url = department_counts_url(dept.id)
+    url = department_counts_url() + f"?department={dept.id}"
 
     response = api_client.get(url)
     assert response.status_code == status.HTTP_200_OK
@@ -425,7 +426,7 @@ def test_clinician_can_view_own_patient_count_in_own_department(
         relationship_start=now,
     )
 
-    url = department_counts_url(department_a.id)
+    url = department_counts_url() + f"?department={department_a.id}"
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
@@ -448,7 +449,7 @@ def test_clinician_with_no_patients_sees_zero_count(
 ):
     api_client.force_authenticate(user=clinician_user_in_dept)
 
-    url = department_counts_url(department_a.id)
+    url = department_counts_url() + f"?department={department_a.id}"
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
@@ -479,8 +480,8 @@ def test_clinician_cannot_use_clinician_id_filter_to_see_others(
         relationship_start=timezone.now(),
     )
 
-    url = department_counts_url(department_a.id)
-    response = api_client.get(url, {"clinician": clinician_a2.id})
+    url = department_counts_url() + f"?department={department_a.id}&clinician={clinician_a2.id}"
+    response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
     data = response.data

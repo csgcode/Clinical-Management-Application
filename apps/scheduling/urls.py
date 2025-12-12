@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from django.urls import path
+from django.urls import path, include
 
 from apps.scheduling.views import ProcedureViewSet, ProcedureScheduledPatientsView
 
@@ -12,5 +12,5 @@ urlpatterns = [
         ProcedureScheduledPatientsView.as_view(),
         name="procedure-scheduled-patients",
     ),
-    *router.urls,
+    path("", include(router.urls)),
 ]
