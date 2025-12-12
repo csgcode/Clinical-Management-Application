@@ -69,7 +69,8 @@ class ProcedureSerializer(serializers.ModelSerializer):
         """
         Cross-field validation:
         - scheduled_at >= now for PLANNED / SCHEDULED
-        - clinicians can only assign procedures to themselves (clinician_id == their profile)
+        - clinicians can only assign procedures to themselves
+        - clinicians must be linked to patient via active PatientClinician
         - ProcedureType is already filtered to is_active via queryset
         """
         attrs = super().validate(attrs)
@@ -102,12 +103,12 @@ class ProcedureSerializer(serializers.ModelSerializer):
             and user.is_authenticated
             and user.groups.filter(name="patient_admin").exists()
         )
-        is_clinician = (
+        is_clinician_user = (
             user and user.is_authenticated and hasattr(user, "clinician_profile")
         )
 
-        if is_clinician and not is_admin:
-            # TODO check the duplciaate logic
+        if is_clinician_user and not is_admin:
+            # TODO check the duplicate logic
             clinician_profile = user.clinician_profile
 
             # clinicians can only assign themselves as clinician
@@ -115,6 +116,19 @@ class ProcedureSerializer(serializers.ModelSerializer):
                 errors["clinician_id"] = [
                     "Clinicians can only assign procedures to themselves."
                 ]
+
+            # clinicians must be linked to patient via active PatientClinician
+            if patient and clinician:
+                has_link = PatientClinician.objects.filter(
+                    patient=patient,
+                    clinician=clinician,
+                    relationship_end__isnull=True,
+                    deleted_at__isnull=True,
+                ).exists()
+                if not has_link:
+                    errors["patient_id"] = [
+                        "You do not have access to this patient."
+                    ]
 
         if errors:
             raise serializers.ValidationError(errors)

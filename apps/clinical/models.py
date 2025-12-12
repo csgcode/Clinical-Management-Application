@@ -14,7 +14,7 @@ class Department(TimeStampedModel):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["name", "-created_at"]
 
     def __str__(self) -> str:
         return self.name
@@ -38,7 +38,7 @@ class Clinician(TimeStampedModel, SoftDeleteModel):
     name = models.CharField(max_length=255)
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["name", "-created_at"]
         indexes = [
             models.Index(fields=["name"]),
         ]
@@ -76,7 +76,7 @@ class Patient(TimeStampedModel, SoftDeleteModel):
         blank=True,
         null=True,
         db_index=True,
-        help_text="Contact email for the patient. Not necessarily unique.",
+        help_text="Contact email for the patient.",
     )
     date_of_birth = models.DateField()
 

@@ -99,11 +99,8 @@ def test_patient_admin_sees_all_clinicians_with_counts(
     assert response.status_code == status.HTTP_200_OK
     data = response.data
 
-    assert data["department"]["id"] == department_a.id
-    assert data["department"]["name"] == department_a.name
-
     returned = {
-        item["clinician"]["id"]: item["patient_count"] for item in data["results"]
+        item["id"]: item["patient_count"] for item in data["results"]
     }
 
     assert data["count"] == 3
@@ -185,14 +182,14 @@ def test_patient_admin_filter_by_clinician_id(
     )
 
     url = department_counts_url(department_a.id)
-    response = api_client.get(url, {"clinician_id": clinician_a1.id})
+    response = api_client.get(url, {"clinician": clinician_a1.id})
 
     assert response.status_code == status.HTTP_200_OK
     data = response.data
     assert data["count"] == 1
     assert len(data["results"]) == 1
     item = data["results"][0]
-    assert item["clinician"]["id"] == clinician_a1.id
+    assert item["id"] == clinician_a1.id
     assert item["patient_count"] == 2
 
 
@@ -208,7 +205,7 @@ def test_patient_admin_filter_by_clinician_not_in_department_returns_empty(
     api_client.force_authenticate(user=patient_admin_user)
 
     url = department_counts_url(department_a.id)
-    response = api_client.get(url, {"clinician_id": clinician_b1.id})
+    response = api_client.get(url, {"clinician": clinician_b1.id})
 
     assert response.status_code == status.HTTP_200_OK
     assert response.data["count"] == 0
@@ -225,10 +222,10 @@ def test_patient_admin_invalid_clinician_id_type_returns_400(
     api_client.force_authenticate(user=patient_admin_user)
 
     url = department_counts_url(department_a.id)
-    response = api_client.get(url, {"clinician_id": "abc"})
+    response = api_client.get(url, {"clinician": "abc"})
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert "clinician_id" in response.data
+    assert "clinician" in response.data
 
 
 # -------------------------------------------------------------------
@@ -280,7 +277,7 @@ def test_soft_deleted_clinician_excluded(
 
     assert response.status_code == status.HTTP_200_OK
     returned = {
-        item["clinician"]["id"]: item["patient_count"]
+        item["id"]: item["patient_count"]
         for item in response.data["results"]
     }
 
@@ -325,7 +322,7 @@ def test_soft_deleted_patient_and_ended_relationship_are_not_counted(
 
     assert response.status_code == status.HTTP_200_OK
     returned = {
-        item["clinician"]["id"]: item["patient_count"]
+        item["id"]: item["patient_count"]
         for item in response.data["results"]
     }
 
@@ -362,7 +359,7 @@ def test_duplicate_links_for_same_patient_are_counted_distinct_once(
 
     assert response.status_code == status.HTTP_200_OK
     returned = {
-        item["clinician"]["id"]: item["patient_count"]
+        item["id"]: item["patient_count"]
         for item in response.data["results"]
     }
 
@@ -395,7 +392,6 @@ def test_department_with_no_clinicians_returns_empty_list(
 
     response = api_client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert response.data["department"]["id"] == dept.id
     assert response.data["count"] == 0
     assert response.data["results"] == []
 
@@ -438,7 +434,7 @@ def test_clinician_can_view_own_patient_count_in_own_department(
     assert len(data["results"]) == 1
 
     item = data["results"][0]
-    assert item["clinician"]["id"] == clinician_a1.id
+    assert item["id"] == clinician_a1.id
     assert item["patient_count"] == 2
 
 
@@ -460,7 +456,7 @@ def test_clinician_with_no_patients_sees_zero_count(
     assert data["count"] == 1
     assert len(data["results"]) == 1
     item = data["results"][0]
-    assert item["clinician"]["id"] == clinician_a1.id
+    assert item["id"] == clinician_a1.id
     assert item["patient_count"] == 0
 
 
@@ -484,12 +480,12 @@ def test_clinician_cannot_use_clinician_id_filter_to_see_others(
     )
 
     url = department_counts_url(department_a.id)
-    response = api_client.get(url, {"clinician_id": clinician_a2.id})
+    response = api_client.get(url, {"clinician": clinician_a2.id})
 
     assert response.status_code == status.HTTP_200_OK
     data = response.data
     assert data["count"] == 1
     assert len(data["results"]) == 1
     item = data["results"][0]
-    assert item["clinician"]["id"] == clinician_a1.id
+    assert item["id"] == clinician_a1.id
     assert item["patient_count"] == 1

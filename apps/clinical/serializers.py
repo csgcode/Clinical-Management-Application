@@ -38,6 +38,29 @@ class DepartmentSummarySerializer(serializers.ModelSerializer):
         fields = ("id", "name")
 
 
-class ClinicianPatientCountSerializer(serializers.Serializer):
-    clinician = ClinicianSummarySerializer()
+class ClinicianPatientCountSerializer(serializers.ModelSerializer):
     patient_count = serializers.IntegerField()
+
+    class Meta:
+        model = Clinician
+        fields = ("id", "name", "patient_count")
+
+"""
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "name": "Dr. Smith",
+      "patient_count": 2
+    },
+    {
+      "id": 2,
+      "name": "Dr. Jones",
+      "patient_count": 1
+    }
+  ]
+}
+"""

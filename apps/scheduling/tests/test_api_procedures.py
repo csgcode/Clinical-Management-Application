@@ -399,10 +399,8 @@ def test_clinician_cannot_create_procedure_for_unlinked_patient(
     }
 
     response = api_client.post(procedure_list_url, payload, format="json")
-    assert response.status_code in (
-        status.HTTP_403_FORBIDDEN,
-        status.HTTP_404_NOT_FOUND,
-    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "patient_id" in response.data
 
 
 @pytest.mark.django_db
