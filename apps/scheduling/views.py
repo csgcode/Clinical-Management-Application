@@ -17,7 +17,6 @@ from apps.scheduling.permissions import IsPatientAdminOrClinician
 from apps.scheduling.filters import ProcedureScheduledPatientsFilter
 from apps.core.pagination import StandardPagination
 from apps.core.permissions_helpers import is_patient_admin, is_clinician
-from apps.core.constants import ACTIVE_PROCEDURE_STATUSES
 
 
 class ProcedureViewSet(viewsets.ModelViewSet):

@@ -28,3 +28,12 @@ class SoftDeleteManager(models.Manager):
         return SoftDeleteQuerySet(self.model, using=self._db).filter(
             deleted_at__isnull=True
         )
+
+
+class IsActiveManager(models.Manager):
+    """
+    Default manager that only shows is_active=True rows.
+    """
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
