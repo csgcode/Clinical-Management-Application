@@ -12,6 +12,24 @@ Setup with uv
 - Migrate DB: `python manage.py migrate`
 - Run server: `python manage.py runserver 0.0.0.0:8000`
 
+
+## Repository Layout
+
+```
+clinicapp/        # Django project (settings, urls, wsgi/asgi)
+apps/
+  core/           # Core services and reusable models.
+  catalog/        
+  clinical/       # Users Profiles (models, serializers, filters, API views, urls)
+  scheduling/     # Scheduling/Procedures
+
+docker-compose.yml
+pyproject.toml
+uv.lock
+```
+
+
+
 Running tests
 -------------
 - Full suite: `pytest`
