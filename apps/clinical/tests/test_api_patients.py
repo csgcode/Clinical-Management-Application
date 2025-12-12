@@ -123,11 +123,6 @@ def test_clinician_cannot_create_update_delete(
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
-# -------------------------------------------------------------------
-# Clinician scoping tests
-# -------------------------------------------------------------------
-
-
 @pytest.mark.django_db
 def test_patient_admin_sees_all_non_deleted_patients_in_list(
     api_client,

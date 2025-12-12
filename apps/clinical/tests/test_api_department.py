@@ -54,10 +54,6 @@ def test_clinician_in_other_department_gets_403(
     response = api_client.get(url)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
-
-# -------------------------------------------------------------------
-# Patient admin behaviour
-# -------------------------------------------------------------------
 @pytest.mark.django_db
 def test_patient_admin_sees_all_clinicians_with_counts(
     api_client,
@@ -228,9 +224,6 @@ def test_patient_admin_invalid_clinician_id_type_returns_400(
     assert "clinician" in response.data
 
 
-# -------------------------------------------------------------------
-# Soft delete / relationship semantics
-# -------------------------------------------------------------------
 @pytest.mark.django_db
 def test_soft_deleted_clinician_excluded(
     api_client,
@@ -396,10 +389,6 @@ def test_department_with_no_clinicians_returns_empty_list(
     assert response.data["count"] == 0
     assert response.data["results"] == []
 
-
-# -------------------------------------------------------------------
-# Clinician self-view behaviour
-# -------------------------------------------------------------------
 @pytest.mark.django_db
 def test_clinician_can_view_own_patient_count_in_own_department(
     api_client,

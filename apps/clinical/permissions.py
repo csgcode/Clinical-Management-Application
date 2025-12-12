@@ -1,6 +1,6 @@
 from rest_framework import permissions
 
-from apps.core.permissions_helpers import is_patient_admin, is_clinician
+from apps.core.permissions_helpers import is_patient_admin
 
 
 class IsPatientAdminOrClinicianReadOnly(permissions.BasePermission):

@@ -1,12 +1,10 @@
 import datetime
 
 import pytest
-from django.contrib.auth.models import Group, Permission
 from django.urls import reverse
-from rest_framework.test import APIClient
 
 from apps.accounts.models import User
-from apps.clinical.models import Patient, Clinician, PatientClinician, Department
+from apps.clinical.models import Patient, Clinician, Department
 
 
 @pytest.fixture

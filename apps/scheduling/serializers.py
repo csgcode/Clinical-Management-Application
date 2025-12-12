@@ -115,7 +115,6 @@ class ProcedureSerializer(serializers.ModelSerializer):
                     "Clinicians can only assign procedures to themselves."
                 ]
 
-            # clinicians must be linked to patient via active PatientClinician
             if patient and clinician:
                 has_link = PatientClinician.objects.filter(
                     patient=patient,

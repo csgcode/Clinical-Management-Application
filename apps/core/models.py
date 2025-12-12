@@ -44,7 +44,7 @@ class IsActiveBaseModel(models.Model):
     """
     Abstract base model for is_active usage
 
-    TODO Implement this base model.
+    TODO Implement this base model across the models which use `is_active` field.
     """
 
     is_active = models.BooleanField(

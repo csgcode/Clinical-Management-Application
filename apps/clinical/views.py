@@ -69,7 +69,7 @@ class DepartmentClinicianPatientCountListViewSet(ListAPIView):
     Scoping:
     - patient_admin: sees all clinicians in the department
     - clinician in that department: sees only themselves
-    - clinician in other department: gets 403 (via IsPatientAdminOrClinicianForDepartment)
+    - clinician in other department: gets 403
     """
 
     serializer_class = ClinicianPatientCountSerializer

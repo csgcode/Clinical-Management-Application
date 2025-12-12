@@ -12,163 +12,6 @@ from apps.clinical.models import Patient, Clinician, Department
 from apps.scheduling.models import Procedure, ProcedureType
 
 
-@pytest.fixture
-def api_client():
-    return APIClient()
-
-
-@pytest.fixture
-def patient_admin_group(db):
-    group, _ = Group.objects.get_or_create(name="patient_admin")
-    return group
-
-
-@pytest.fixture
-def patient_admin_user(db, patient_admin_group):
-    user = User.objects.create_user(
-        email="admin@example.com",
-        password="password123",
-        is_staff=True,
-    )
-    user.groups.add(patient_admin_group)
-    return user
-
-
-@pytest.fixture
-def regular_user(db):
-    return User.objects.create_user(
-        email="regular@example.com",
-        password="password123",
-    )
-
-
-@pytest.fixture
-def clinician_user(db):
-    return User.objects.create_user(
-        email="clinician@example.com",
-        password="password123",
-    )
-
-
-@pytest.fixture
-def other_clinician_user(db):
-    return User.objects.create_user(
-        email="other_clinician@example.com",
-        password="password123",
-    )
-
-
-@pytest.fixture
-def department_a(db):
-    return Department.objects.create(name="Radiology")
-
-
-@pytest.fixture
-def department_b(db):
-    return Department.objects.create(name="Cardiology")
-
-
-@pytest.fixture
-def clinician_a(db, clinician_user, department_a):
-    return Clinician.objects.create(
-        user=clinician_user,
-        department=department_a,
-        name="Dr. A",
-    )
-
-
-@pytest.fixture
-def clinician_b(db, other_clinician_user, department_b):
-    return Clinician.objects.create(
-        user=other_clinician_user,
-        department=department_b,
-        name="Dr. B",
-    )
-
-
-@pytest.fixture
-def another_clinician_same_dept(db, department_a):
-    return Clinician.objects.create(
-        user=User.objects.create_user(
-            email="clinician2@example.com",
-            password="password123",
-        ),
-        department=department_a,
-        name="Dr. A2",
-    )
-
-
-@pytest.fixture
-def active_type(db, department_a):
-    return ProcedureType.objects.create(
-        name="MRI Brain",
-        code="MRI_BRAIN",
-        default_duration_minutes=30,
-        department=department_a,
-        is_active=True,
-    )
-
-
-@pytest.fixture
-def other_type(db, department_a):
-    return ProcedureType.objects.create(
-        name="CT Chest",
-        code="CT_CHEST",
-        default_duration_minutes=20,
-        department=department_a,
-        is_active=True,
-    )
-
-
-@pytest.fixture
-def inactive_type(db, department_a):
-    return ProcedureType.objects.create(
-        name="Old Test",
-        code="OLD_TEST",
-        default_duration_minutes=15,
-        department=department_a,
-        is_active=False,
-    )
-
-
-@pytest.fixture
-def patient_1(db):
-    return Patient.objects.create(
-        name="Patient One",
-        gender=Patient.Gender.FEMALE,
-        email="p1@example.com",
-        date_of_birth=datetime.date(1990, 1, 1),
-    )
-
-
-@pytest.fixture
-def patient_2(db):
-    return Patient.objects.create(
-        name="Patient Two",
-        gender=Patient.Gender.MALE,
-        email="p2@example.com",
-        date_of_birth=datetime.date(1985, 2, 2),
-    )
-
-
-@pytest.fixture
-def patient_3(db):
-    return Patient.objects.create(
-        name="Patient Three",
-        gender=Patient.Gender.OTHER,
-        email="p3@example.com",
-        date_of_birth=datetime.date(1982, 3, 3),
-    )
-
-
-@pytest.fixture
-def scheduled_patients_url():
-    return reverse("scheduling:procedure-scheduled-patients")
-
-
-# -------------------------------------------------------------------
-# Auth / permissions
-# -------------------------------------------------------------------
 @pytest.mark.django_db
 def test_unauthenticated_gets_401(api_client, scheduled_patients_url, active_type):
     response = api_client.get(
@@ -204,7 +47,6 @@ def test_missing_procedure_type_returns_400(
 ):
     api_client.force_authenticate(user=patient_admin_user)
     response = api_client.get(scheduled_patients_url)
-    # assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert "procedure_type" in response.data
 
 
@@ -249,9 +91,6 @@ def test_inactive_procedure_type_returns_empty_list(
     assert response.data["results"] == []
 
 
-# -------------------------------------------------------------------
-# Admin: happy path, default statuses and sorting
-# -------------------------------------------------------------------
 @pytest.mark.django_db
 def test_admin_lists_scheduled_patients_for_type_default_statuses(
     api_client,
@@ -275,7 +114,6 @@ def test_admin_lists_scheduled_patients_for_type_default_statuses(
     later = now + datetime.timedelta(hours=1)
     much_later = now + datetime.timedelta(hours=2)
 
-    # Included: same type, PLANNED / SCHEDULED
     proc1 = Procedure.objects.create(
         procedure_type=active_type,
         patient=patient_1,
@@ -293,7 +131,6 @@ def test_admin_lists_scheduled_patients_for_type_default_statuses(
         duration_minutes=45,
     )
 
-    # Excluded: completed, cancelled, other type
     Procedure.objects.create(
         procedure_type=active_type,
         patient=patient_3,
@@ -322,11 +159,9 @@ def test_admin_lists_scheduled_patients_for_type_default_statuses(
     results = data["results"]
     assert len(results) == 2
 
-    # sorted by scheduled_at asc: proc2 (now), then proc1 (later)
     assert results[0]["procedure"]["id"] == proc2.id
     assert results[1]["procedure"]["id"] == proc1.id
 
-    # minimal patient info
     for item in results:
         patient = item["patient"]
         assert set(patient.keys()) == {"id", "name", "gender"}
@@ -341,9 +176,6 @@ def test_admin_lists_scheduled_patients_for_type_default_statuses(
         assert "duration_minutes" in procedure
 
 
-# -------------------------------------------------------------------
-# Date range filters: date_from / date_to
-# -------------------------------------------------------------------
 @pytest.mark.django_db
 def test_admin_filters_by_date_range(
     api_client,
@@ -396,7 +228,6 @@ def test_admin_filters_by_date_range(
         duration_minutes=30,
     )
 
-    # date_from = today -> today & tomorrow
     resp1 = api_client.get(
         scheduled_patients_url,
         {
@@ -410,7 +241,6 @@ def test_admin_filters_by_date_range(
     assert p_tm.id in ids1
     assert p_y.id not in ids1
 
-    # date_to = today -> yesterday & today
     resp2 = api_client.get(
         scheduled_patients_url,
         {
@@ -424,7 +254,6 @@ def test_admin_filters_by_date_range(
     assert p_t.id in ids2
     assert p_tm.id not in ids2
 
-    # date_from = today, date_to = today -> only today
     resp3 = api_client.get(
         scheduled_patients_url,
         {
@@ -476,9 +305,6 @@ def test_date_from_greater_than_date_to_returns_400(
     assert "non_field_errors" in resp.data
 
 
-# -------------------------------------------------------------------
-# Department / clinician filters
-# -------------------------------------------------------------------
 @pytest.mark.django_db
 def test_admin_filters_by_department(
     api_client,
@@ -512,7 +338,6 @@ def test_admin_filters_by_department(
         duration_minutes=30,
     )
 
-    # filter dept A -> only p_a
     resp_a = api_client.get(
         scheduled_patients_url,
         {
@@ -525,7 +350,6 @@ def test_admin_filters_by_department(
     assert p_a.id in ids_a
     assert p_b.id not in ids_a
 
-    # filter dept B -> only p_b
     resp_b = api_client.get(
         scheduled_patients_url,
         {
@@ -625,10 +449,6 @@ def test_admin_invalid_clinician_id_type_returns_400(
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
     assert "clinician" in resp.data
 
-
-# -------------------------------------------------------------------
-# Soft delete behaviour
-# -------------------------------------------------------------------
 @pytest.mark.django_db
 def test_soft_deleted_procedure_patient_clinician_excluded(
     api_client,
@@ -641,7 +461,6 @@ def test_soft_deleted_procedure_patient_clinician_excluded(
 ):
     api_client.force_authenticate(user=patient_admin_user)
 
-    # active procedure
     p_active = Procedure.objects.create(
         procedure_type=active_type,
         patient=patient_1,
@@ -650,7 +469,6 @@ def test_soft_deleted_procedure_patient_clinician_excluded(
         scheduled_at=timezone.now(),
         duration_minutes=30,
     )
-    # soft-deleted procedure
     p_deleted = Procedure.objects.create(
         procedure_type=active_type,
         patient=patient_2,
@@ -661,7 +479,6 @@ def test_soft_deleted_procedure_patient_clinician_excluded(
     )
     p_deleted.delete()
 
-    # soft-delete patient for another procedure
     p_soft_patient = Procedure.objects.create(
         procedure_type=active_type,
         patient=patient_2,
@@ -683,10 +500,6 @@ def test_soft_deleted_procedure_patient_clinician_excluded(
     assert p_deleted.id not in ids
     assert p_soft_patient.id not in ids
 
-
-# -------------------------------------------------------------------
-# Clinician scoping
-# -------------------------------------------------------------------
 @pytest.mark.django_db
 def test_clinician_sees_only_own_procedures(
     api_client,
@@ -703,7 +516,7 @@ def test_clinician_sees_only_own_procedures(
     p_a = Procedure.objects.create(
         procedure_type=active_type,
         patient=patient_1,
-        clinician=clinician_a,  # logged-in clinician
+        clinician=clinician_a,
         status="SCHEDULED",
         scheduled_at=timezone.now(),
         duration_minutes=30,
@@ -711,7 +524,7 @@ def test_clinician_sees_only_own_procedures(
     Procedure.objects.create(
         procedure_type=active_type,
         patient=patient_2,
-        clinician=clinician_b,  # other clinician
+        clinician=clinician_b,
         status="SCHEDULED",
         scheduled_at=timezone.now(),
         duration_minutes=30,
@@ -724,49 +537,6 @@ def test_clinician_sees_only_own_procedures(
     assert resp.status_code == status.HTTP_200_OK
     ids = [r["procedure"]["id"] for r in resp.data["results"]]
     assert ids == [p_a.id]
-
-
-# @pytest.mark.django_db
-# def test_clinician_cannot_use_clinician_id_filter_to_see_others(
-#     api_client,
-#     clinician_user,
-#     clinician_a,
-#     another_clinician_same_dept,
-#     scheduled_patients_url,
-#     active_type,
-#     patient_1,
-#     patient_2,
-# ):
-#     api_client.force_authenticate(user=clinician_user)
-
-#     p_a = Procedure.objects.create(
-#         procedure_type=active_type,
-#         patient=patient_1,
-#         clinician=clinician_a,  # logged-in
-#         status="SCHEDULED",
-#         scheduled_at=timezone.now(),
-#         duration_minutes=30,
-#     )
-#     Procedure.objects.create(
-#         procedure_type=active_type,
-#         patient=patient_2,
-#         clinician=another_clinician_same_dept,  # different clinician
-#         status="SCHEDULED",
-#         scheduled_at=timezone.now(),
-#         duration_minutes=30,
-#     )
-
-#     resp = api_client.get(
-#         scheduled_patients_url,
-#         {
-#             "procedure_type": active_type.id,
-#             "clinician": another_clinician_same_dept.id,
-#         },
-#     )
-#     assert resp.status_code == status.HTTP_200_OK
-#     ids = [r["procedure"]["id"] for r in resp.data["results"]]
-#     # still only own procedure
-#     assert ids == [p_a.id]
 
 
 @pytest.mark.django_db
@@ -807,4 +577,4 @@ def test_admin_pagination(
     )
     assert resp2.status_code == status.HTTP_200_OK
     assert resp2.data["count"] == 5
-    assert len(resp2.data["results"]) in (2, 1)  # depending on final page
+    assert len(resp2.data["results"]) in (2, 1)

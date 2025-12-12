@@ -298,3 +298,5 @@ def unlinked_patient(db):
         email="unlinked@example.com",
         date_of_birth=datetime.date(1993, 3, 3),
     )
+
+

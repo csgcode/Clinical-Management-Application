@@ -44,23 +44,3 @@ class ClinicianPatientCountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Clinician
         fields = ("id", "name", "patient_count")
-
-"""
-{
-  "count": 3,
-  "next": null,
-  "previous": null,
-  "results": [
-    {
-      "id": 1,
-      "name": "Dr. Smith",
-      "patient_count": 2
-    },
-    {
-      "id": 2,
-      "name": "Dr. Jones",
-      "patient_count": 1
-    }
-  ]
-}
-"""
