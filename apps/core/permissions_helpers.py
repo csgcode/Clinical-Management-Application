@@ -1,8 +1,5 @@
 """
-Core permission helper functions for DRY permission checking.
-
-These utilities eliminate code duplication across views and serializers
-when checking user roles (admin vs clinician).
+Core permission helper functions
 """
 
 
@@ -32,7 +29,7 @@ def is_clinician(user) -> bool:
     Returns:
         True if user is authenticated and has clinician_profile, False otherwise.
     """
-    return user.is_authenticated and hasattr(user, "clinician_profile")
+    return user.is_authenticated and user.has_clinician_profile
 
 
 def get_user_role_type(user) -> str:

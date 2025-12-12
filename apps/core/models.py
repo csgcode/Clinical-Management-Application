@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
-from .managers import SoftDeleteManager
+from .managers import SoftDeleteManager, IsActiveManager
 
 
 class TimeStampedModel(models.Model):
@@ -38,3 +38,22 @@ class SoftDeleteModel(models.Model):
     @property
     def is_deleted(self) -> bool:
         return self.deleted_at is not None
+
+
+class IsActiveBaseModel(models.Model):
+    """
+    Abstract base model for is_active usage
+
+    TODO Implement this base model.
+    """
+    
+    is_active = models.BooleanField(
+            default=True,
+            help_text="Set to False to retire this object"
+            )
+    
+    objects = IsActiveManager()
+    
+    class Meta:
+        abstract = True
+

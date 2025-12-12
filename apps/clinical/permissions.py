@@ -26,11 +26,12 @@ class IsPatientAdminOrClinicianReadOnly(permissions.BasePermission):
             True if user has appropriate permissions, False otherwise
         """
         user = request.user
-        if not user or not user.is_authenticated:
+        # TODO remove and use IsAuthenticated permission
+        if not user.is_authenticated:
             return False
 
         admin = is_patient_admin(user)
-        clinician = is_clinician(user)
+        clinician = user.has_clinician_profile
 
         if request.method in permissions.SAFE_METHODS:
             return admin or clinician
@@ -42,7 +43,7 @@ class IsPatientAdminOrClinicianReadOnly(permissions.BasePermission):
 class IsPatientAdminOrClinicianForDepartment(permissions.BasePermission):
     """
     - patient_admin: can view stats for any department
-    - clinician: can only view stats for their own department (self-only scoping happens in view)
+    - clinician: can only view stats for their own department (self-only)
     """
 
     def has_permission(self, request, view) -> bool:
@@ -57,8 +58,6 @@ class IsPatientAdminOrClinicianForDepartment(permissions.BasePermission):
             True if user has appropriate permissions, False otherwise
         """
         user = request.user
-        if not user or not user.is_authenticated:
-            return False
 
         department_id = view.kwargs.get("department_id")
 
@@ -67,7 +66,7 @@ class IsPatientAdminOrClinicianForDepartment(permissions.BasePermission):
             return True
 
         # clinician: only if their department matches path department
-        if is_clinician(user):
+        if user.has_clinician_profile:
             clinician = user.clinician_profile
             if clinician.department_id == department_id:
                 return True

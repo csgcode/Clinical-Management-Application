@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 from .managers import UserManager
@@ -19,3 +20,19 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return self.email
+    
+
+    def _has_related(self, attr: str) -> bool:
+        try:
+            getattr(self, attr)
+            return True
+        except ObjectDoesNotExist:
+            return False
+
+    @property
+    def has_clinician_profile(self) -> bool:
+        return self._has_related("clinician_profile")
+
+    @property
+    def has_patient_profile(self) -> bool:
+        return self._has_related("patient_profile")
