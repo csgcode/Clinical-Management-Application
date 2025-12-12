@@ -13,10 +13,7 @@ def is_patient_admin(user) -> bool:
     Returns:
         True if user is authenticated and in 'patient_admin' group, False otherwise.
     """
-    return (
-        user.is_authenticated
-        and user.groups.filter(name="patient_admin").exists()
-    )
+    return user.is_authenticated and user.groups.filter(name="patient_admin").exists()
 
 
 def is_clinician(user) -> bool:

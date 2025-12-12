@@ -34,7 +34,7 @@ class ProcedureType(TimeStampedModel):
     )
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["name", "-created_at"]
         indexes = [
             models.Index(fields=["name"]),
             models.Index(fields=["code"]),

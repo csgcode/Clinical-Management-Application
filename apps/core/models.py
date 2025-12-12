@@ -46,14 +46,12 @@ class IsActiveBaseModel(models.Model):
 
     TODO Implement this base model.
     """
-    
+
     is_active = models.BooleanField(
-            default=True,
-            help_text="Set to False to retire this object"
-            )
-    
+        default=True, help_text="Set to False to retire this object"
+    )
+
     objects = IsActiveManager()
-    
+
     class Meta:
         abstract = True
-

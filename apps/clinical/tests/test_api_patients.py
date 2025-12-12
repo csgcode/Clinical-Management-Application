@@ -8,7 +8,6 @@ from rest_framework import status
 
 from apps.accounts.models import User
 from apps.clinical.models import Patient, PatientClinician
-from apps.clinical.tests.conftest import *
 
 
 @pytest.mark.django_db
@@ -54,12 +53,10 @@ def test_patient_admin_can_access_all_crud(
 
     list_url = reverse("clinical:patient-list")
 
-    # list
     response = api_client.get(list_url)
     assert response.status_code == status.HTTP_200_OK
     assert response.data["count"] >= 1
 
-    # create
     payload = {
         "name": "New Patient",
         "gender": "FEMALE",
@@ -70,13 +67,11 @@ def test_patient_admin_can_access_all_crud(
     assert response.status_code == status.HTTP_201_CREATED
     new_id = response.data["id"]
 
-    # retrieve
     detail_url = reverse("clinical:patient-detail", args=[active_patient.id])
     response = api_client.get(detail_url)
     assert response.status_code == status.HTTP_200_OK
     assert response.data["id"] == active_patient.id
 
-    # update
     detail_url_new = reverse("clinical:patient-detail", args=[new_id])
     response = api_client.patch(
         detail_url_new,
@@ -86,10 +81,9 @@ def test_patient_admin_can_access_all_crud(
     assert response.status_code == status.HTTP_200_OK
     assert response.data["name"] == "Updated Name"
 
-    # delete (soft)
     response = api_client.delete(detail_url_new)
     assert response.status_code == status.HTTP_204_NO_CONTENT
-    # ensure soft-deleted does not come back in list
+
     response = api_client.get(list_url)
     ids = [p["id"] for p in response.data["results"]]
     assert new_id not in ids
@@ -106,7 +100,6 @@ def test_clinician_cannot_create_update_delete(
     list_url = reverse("clinical:patient-list")
     detail_url = reverse("clinical:patient-detail", args=[active_patient.id])
 
-    # create
     response = api_client.post(
         list_url,
         {
@@ -119,7 +112,6 @@ def test_clinician_cannot_create_update_delete(
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    # update
     response = api_client.patch(
         detail_url,
         {"name": "Hacked"},
@@ -127,7 +119,6 @@ def test_clinician_cannot_create_update_delete(
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    # delete
     response = api_client.delete(detail_url)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -154,7 +145,7 @@ def test_patient_admin_sees_all_non_deleted_patients_in_list(
     returned_ids = {p["id"] for p in response.data["results"]}
     assert active_patient.id in returned_ids
     assert another_patient.id in returned_ids
-    assert soft_deleted_patient.id not in returned_ids  # soft-deleted excluded
+    assert soft_deleted_patient.id not in returned_ids
 
 
 @pytest.mark.django_db
@@ -199,7 +190,6 @@ def test_clinician_cannot_retrieve_unlinked_patient(
 
     url = reverse("clinical:patient-detail", args=[unlinked_patient.id])
     response = api_client.get(url)
-    # Should be 404 (not 403) to avoid leaking existence
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -212,20 +202,13 @@ def test_soft_deleted_patient_returns_404_for_admin_and_clinician(
 ):
     detail_url = reverse("clinical:patient-detail", args=[soft_deleted_patient.id])
 
-    # admin
     api_client.force_authenticate(user=patient_admin_user)
     response = api_client.get(detail_url)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    # clinician
     api_client.force_authenticate(user=clinician_profile.user)
     response = api_client.get(detail_url)
     assert response.status_code == status.HTTP_404_NOT_FOUND
-
-
-# -------------------------------------------------------------------
-# Search behaviour
-# -------------------------------------------------------------------
 
 
 @pytest.mark.django_db
@@ -257,7 +240,6 @@ def test_patient_admin_search_by_name_and_email(
 
     url = reverse("clinical:patient-list")
 
-    # search name fragment "jan" => Jane + Janet
     response = api_client.get(url, {"search": "jan"})
     assert response.status_code == status.HTTP_200_OK
     returned_ids = {p["id"] for p in response.data["results"]}
@@ -265,7 +247,6 @@ def test_patient_admin_search_by_name_and_email(
     assert p2.id in returned_ids
     assert p3.id not in returned_ids
 
-    # search by email fragment
     response = api_client.get(url, {"search": "smith@"})
     assert response.status_code == status.HTTP_200_OK
     returned_ids = {p["id"] for p in response.data["results"]}
@@ -280,7 +261,6 @@ def test_clinician_search_is_scoped_to_linked_patients(
     clinician_profile,
     other_clinician_profile,
 ):
-    # two patients with similar names but different clinician links
     my_patient = Patient.objects.create(
         name="Scoped Jane",
         gender=Patient.Gender.FEMALE,
@@ -314,6 +294,5 @@ def test_clinician_search_is_scoped_to_linked_patients(
     assert response.status_code == status.HTTP_200_OK
     returned_ids = {p["id"] for p in response.data["results"]}
 
-    # clinician should only see their own patient, not the other
     assert my_patient.id in returned_ids
     assert other_patient.id not in returned_ids

@@ -94,10 +94,17 @@ def seed_groups_and_permissions():
     patient_admin_group, _ = Group.objects.get_or_create(name="patient_admin")
     clinician_group, _ = Group.objects.get_or_create(name="clinician")
 
-    patient_content_type = ContentType.objects.get(app_label="clinical", model="patient")
+    patient_content_type = ContentType.objects.get(
+        app_label="clinical", model="patient"
+    )
     patient_perms = Permission.objects.filter(
         content_type=patient_content_type,
-        codename__in=["add_patient", "change_patient", "delete_patient", "view_patient"],
+        codename__in=[
+            "add_patient",
+            "change_patient",
+            "delete_patient",
+            "view_patient",
+        ],
     )
     patient_admin_group.permissions.set(patient_perms)
 
@@ -365,7 +372,9 @@ def seed_procedures():
     for proc_data in procedures:
         patient = Patient.objects.get(name=proc_data["patient_name"])
         clinician = Clinician.objects.get(name=proc_data["clinician_name"])
-        procedure_type = ProcedureType.objects.get(code=proc_data["procedure_type_code"])
+        procedure_type = ProcedureType.objects.get(
+            code=proc_data["procedure_type_code"]
+        )
 
         Procedure.objects.get_or_create(
             patient=patient,

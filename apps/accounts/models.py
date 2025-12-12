@@ -7,7 +7,7 @@ from .managers import UserManager
 
 class User(AbstractUser):
     """
-    A Custom extendable user model. This user model maps 1 - 1 with Profile models.
+    A Custom extendable user model.
     """
 
     username = None
@@ -20,7 +20,6 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return self.email
-    
 
     def _has_related(self, attr: str) -> bool:
         try:
