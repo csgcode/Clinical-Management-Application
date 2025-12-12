@@ -71,7 +71,6 @@ class ProcedureSerializer(serializers.ModelSerializer):
         - scheduled_at >= now for PLANNED / SCHEDULED
         - clinicians can only assign procedures to themselves
         - clinicians must be linked to patient via active PatientClinician
-        - ProcedureType is already filtered to is_active via queryset
         """
         attrs = super().validate(attrs)
         request = self.context.get("request")
@@ -111,7 +110,6 @@ class ProcedureSerializer(serializers.ModelSerializer):
             # TODO check the duplicate logic
             clinician_profile = user.clinician_profile
 
-            # clinicians can only assign themselves as clinician
             if clinician != clinician_profile:
                 errors["clinician_id"] = [
                     "Clinicians can only assign procedures to themselves."
@@ -133,10 +131,6 @@ class ProcedureSerializer(serializers.ModelSerializer):
         if errors:
             raise serializers.ValidationError(errors)
 
-        # TODO move to create
-        if not attrs.get("name") and procedure_type:
-            attrs["name"] = procedure_type.name
-
         return attrs
 
     def create(self, validated_data):
@@ -150,6 +144,9 @@ class ProcedureSerializer(serializers.ModelSerializer):
             and procedure_type.default_duration_minutes
         ):
             validated_data["duration_minutes"] = procedure_type.default_duration_minutes
+
+        if not validated_data.get("name") and procedure_type:
+            validated_data["name"] = procedure_type.name
 
         return super().create(validated_data)
 

@@ -17,9 +17,9 @@ class ProcedureViewSet(viewsets.ModelViewSet):
     """
     Procedures API
 
-    - POST /api/v1/procedures/       (assign procedure to patient)
-    - GET /api/v1/procedures/        (list)
-    - GET /api/v1/procedures/{id}/   (detail)
+    - POST /api/v1/procedures/
+    - GET /api/v1/procedures/
+    - GET /api/v1/procedures/{id}/
     - PATCH/DELETE
     """
 
@@ -47,6 +47,11 @@ class ProcedureViewSet(viewsets.ModelViewSet):
         return qs.none()
 
 
+"""
+Keeping this endpoint separate as ModelViewset(ProcedureView) can be used to list all 
+Procedures with filters on all status and fields. 
+This view explicitly allow only ACTIVE_PROCEDURE_STATUSES procedures. Hence a dedicated view.
+"""
 class ProcedureScheduledPatientsView(ListAPIView):
     """
     GET /api/v1/procedures/scheduled-patients/?procedure_type_id=...
@@ -54,7 +59,7 @@ class ProcedureScheduledPatientsView(ListAPIView):
     Lists patients scheduled for a specific procedure type with filtering options.
 
     - patient_admin: sees all matching procedures
-    - clinician: sees only their own procedures (clinician_id filter ignored)
+    - clinician: sees only their own procedures
     """
 
     permission_classes = [IsAuthenticated, IsPatientAdminOrClinician]

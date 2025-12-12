@@ -7,10 +7,7 @@ class IsPatientAdminOrClinician(BasePermission):
     """
     Allows access only to:
     - Users in 'patient_admin' group
-    - Clinicians (have clinician_profile)
-
-    Actual scoping rules (linked patient, self clinician) are enforced
-    in the view's perform_create and queryset.
+    - Clinicians 
     """
 
     def has_permission(self, request, view) -> bool:

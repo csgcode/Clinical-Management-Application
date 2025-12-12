@@ -70,9 +70,6 @@ class DepartmentClinicianPatientCountListViewSet(ListAPIView):
     - patient_admin: sees all clinicians in the department
     - clinician in that department: sees only themselves
     - clinician in other department: gets 403 (via IsPatientAdminOrClinicianForDepartment)
-    
-    Annotations:
-    - patient_count: count of active patients linked to each clinician
     """
 
     serializer_class = ClinicianPatientCountSerializer
@@ -82,21 +79,12 @@ class DepartmentClinicianPatientCountListViewSet(ListAPIView):
     search_fields = ['name']
 
     def get_queryset(self):
-        """
-        Base queryset:
-        1. Filter clinicians by department (via FilterSet)
-        2. Apply user scoping (clinicians see only themselves)
-        3. Annotate with patient counts
-        
-        Note: Department access permission is checked by IsPatientAdminOrClinicianForDepartment
-        """
         user = self.request.user
         is_admin = is_patient_admin(user)
         is_clinician = user.has_clinician_profile
 
         qs = Clinician.objects.all()
 
-        # Scoping: non-admin clinicians see only themselves
         if is_clinician and not is_admin:
             qs = qs.filter(pk=user.clinician_profile.pk)
 
